@@ -1,0 +1,9 @@
+Create a single .exe:
+
+1) Install python 3.8 from python.org. Make sure to select the add python to path option during the installation.
+
+2) run in command prompt: pip3 install -U pyinstaller
+
+3) run: pyinstaller --onefile aanestys.py 
+   -> the .exe can be found in folder 'dist'
+
