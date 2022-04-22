@@ -22,11 +22,9 @@ def storeValues():
     """
     global vals
 
-    prevExists = True if path.exists(FILE) else False
-
     name = input("\n Anna nimi lukujoukolle: ")
 
-    if not prevExists:
+    if not path.exists(FILE):
         _d = {}
         _d[name] = vals
     else:
