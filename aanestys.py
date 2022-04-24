@@ -1,18 +1,45 @@
-# Implemented by Teuvo Eloranta 04/2022.
-
 from os import system, stat, remove, path
 from string import digits 
 from time import sleep
 import json
 import sys
+import signal
 
 
-FILE = "arvot.json"
+FILE = "data.json"
 
 sVals = ""
 vals = []
 
-system("cls")
+
+
+def sigHandler(signal, frame):
+    """
+    Exit nicely on CTRL+C
+    """
+    print("\n\n HEIPPA!\n\n")
+    sys.exit(0)
+
+
+signal.signal(signal.SIGINT, sigHandler)
+
+
+
+def clearScreen():
+    """
+    """
+    if sys.platform == "win32":
+        system("cls")
+    else:
+        system("clear")
+
+
+def pressToContinue():
+    """
+    press any key to continue
+    to main view
+    """
+    input(" Paina jotain nappulaa jatkaaksesi: ")
 
 
 def storeValues():
@@ -28,12 +55,21 @@ def storeValues():
         _d = {}
         _d[name] = vals
     else:
-        with open('arvot.json', "r") as f:
+        with open(FILE, "r") as f:
             _d = json.load(f)
             _d[name] = vals
 
     with open(FILE, "w") as f:
         f.write(json.dumps(_d))
+
+    print("\n\n")
+
+
+def avg(lst):
+    """
+    Returns average value of lst
+    """
+    return sum(lst) / len(lst)
 
 
 def aver():
@@ -41,43 +77,68 @@ def aver():
     Calculate average from the values
     and show it in screen.
     """
-
     global vals
 
-    system("cls")
-    print("\n Keskiarvo: {:.2f} / {} lukua.".format(sum(vals)/len(vals), len(vals)))
+    clearScreen()
+    print("\n Keskiarvo: {:.2f} / {} lukua.".format(avg(vals), len(vals)))
+
+
+def oldValuesExist():
+    """
+    Exit operation nicely, if no old
+    value sets in JSON file.
+    """
+    if not path.isfile(FILE):
+        print("\n Vanhoja lukujoukkoja ei löytynyt.\n\n")
+        pressToContinue()
+        return False
+    return True
 
 
 def showSaved():
     """
     Show all the saved value sets
     stored in JSON file.
+    Shows ordered by biggest to lowest average value calculated.
     """
+    if not oldValuesExist():
+        return
 
-    if not path.exists(FILE):
-        print("\n Vanhoja lukujoukkoja ei löytynyt.\n")
-    else:
-        print("\n Talletetut lukujoukot:")
-        print(" ----------------------")
+    clearScreen()
 
-        with open('arvot.json', "r") as f:
-            _d = json.load(f)
+    print("\n Talletetut lukujoukot:")
+    print(" ----------------------")
 
-        for key in _d:
-            vals = str(_d[key]).replace("[", "").replace("]", "")
-            print("\n {:20} k-a: {:.2f}   ({})".format(key, sum(_d[key])/len(_d[key]), vals) )
-        print("\n\n")
+    with open(FILE, "r") as f:
+        _d = json.load(f)
 
-    sys.exit(0)
+    # _d  = {KEY:LIST-OF-VALUES, ...}
+    # _d2 = {AVG-VAL : KEY, ...}
+    # _keys = [5, 4.2, 3,3, 2, 1.1, 0.4]
+
+    _d2 = {}
+    for key in _d:
+        _d2[avg(_d[key])] = key
+
+    _keys = sorted(_d2, reverse=True)
+
+    for key in _keys:
+        vals = str(_d[_d2[key]]).replace("[", "").replace("]", "")
+        print("\n {:20} k-a: {:4.2f}   ({})".format(_d2[key], round(avg(_d[_d2[key]]), 2), vals))
+    print("\n\n")
+
+    pressToContinue()
 
 
-def removeOne():
+
+def removeValueSet():
     """
     Remove a selected set of values
     from JSON file.
     """
+    oldValuesExist()
 
-    with open('arvot.json', "r") as f:
+    with open(FILE, "r") as f:
         _d = json.load(f)
 
     _lst = []
@@ -87,27 +148,32 @@ def removeOne():
     for i, key in enumerate(_d):
         print(" " + str(i+1) + ") " + key)
         _lst.append(key)
+    print(" x) poista kaikki")
 
-    ind = int(input("\n Valitse poistettava lukujoukko sen numerolla: ")) - 1
+    sel = input("\n Valitse poistettava lukujoukko sen numerolla (tai: x): ")
 
-    if input("\n Poistetaanko '%s' varmasti? K/E: " % _lst[ind]).lower() == "k":
-        _d.pop(_lst[ind], None)
-        print("\n -> poistettu\n")
+    if sel.lower() == "x":
+        delOldValues()
+    else:
+        ind = int(sel) - 1
 
-    with open(FILE, "w") as f:
-        f.write(json.dumps(_d))
+        if input("\n Poistetaanko '%s' varmasti? K/E: " % _lst[ind]).lower() == "k":
+            _d.pop(_lst[ind], None)
+            print("\n -> poistettu\n")
+            pressToContinue()
 
-    sys.exit(0)
+        with open(FILE, "w") as f:
+            f.write(json.dumps(_d))
+
 
 
 def info():
     """
     Show description of the program.
     """
-
     print("""\n
  Ohjelma kerää lukuarvoja käyttäjältä yksi kerrallaan ja lopulta 
- tallettaa ne tiedostoon arvot.json käyttäjän valitsemalla nimellä.
+ tallettaa ne tiedostoon %s käyttäjän valitsemalla nimellä.
  Ohjelma näyttää annettujen arvojen keskiarvon.
 
  Ohjelmaa voi käyttää vaikka "levyraadissa" - käyttäjien kappaleelle 
@@ -115,10 +181,10 @@ def info():
  nimellä talteen. Lopuksi kaikki talletetut äänet luetaan ohjelmalla
  tiedostosta ja katsotaan mikä sai parhaat pisteet.
  \n
- Ohjelman versio: 0.1  (23.04.2022)
- \n""")
+ Ohjelman versio: 0.2  (24.04.2022)
+ \n""" % FILE)
 
-    sys.exit(0)
+    pressToContinue()
 
 
 def delOldValues():
@@ -126,16 +192,15 @@ def delOldValues():
   Ask if old values are removed
   form JSON file before string new ones.
   """
-
-  if not path.isfile(FILE):
-      return
+  oldValuesExist()
 
   if stat(FILE).st_size > 0:
-      if input("\n Poistetaanko aiemmin talletetut vanhat arvot ensin? K/E: ").lower().startswith("k"):
-          sleep(1.6)
+      if input("\n Poistetaanko kaikki aiemmin talletetut lukujoukot? K/E: ").lower().startswith("k"):
+          sleep(1.2)
           if input("\n Oletko varma? K/E: ").lower() == "k":
               remove(FILE)
               print("\n -> Vanhat arvot poistettu.")
+              pressToContinue()
 
 
 def askNewValues():
@@ -143,8 +208,8 @@ def askNewValues():
   Ask values from the user
   and save them in the end.
   """
-
   while True:
+
       print("\n Kirjoita 'e' lopettaaksesi arvojen syötön.\n")
 
       val = input("\n Anna luku: ")
@@ -163,37 +228,47 @@ def askNewValues():
   if vals:
       aver()
       storeValues()
-
-  sys.exit(0)
+      del vals[:]
 
 
 def main():
   """
-  Ask what is done from the user
+  Ask the user what is done
   """
+  while True:
 
-  print("\n Valitse toimenpide 1-4:\n")
-  print(" 1) Anna uusi lukujoukko")
-  print(" 2) Näytä talletetut lukujoukot")
-  print(" 3) Poista tallennettu lukujoukko")
-  print(" 4) Näytä ohje")
+      clearScreen()
 
-  action = input("\n Valintasi: ")
+      print("\n Valitse toimenpide 1-4:\n")
+      print(" 1) Anna uusi lukujoukko")
+      print(" 2) Näytä talletetut lukujoukot")
+      print(" 3) Poista tallennettu lukujoukko")
+      print(" 4) Näytä ohje")
+      print(" e) Lopeta ohjelma")
 
-  if action == "2":
-      showSaved()
+      action = input("\n Valintasi: ")
 
-  elif action == "3":
-      removeOne()
+      if action == "e":
+        print("\n HEIPPA!\n\n")
+        sys.exit(0)
 
-  elif action == "4" or "-h" in sys.argv or "-help" in sys.argv:
-      info()
+      elif action == "2":
+          showSaved()
 
+      elif action == "3":
+          removeValueSet()
 
-  delOldValues()
+      elif action == "4" or "-h" in sys.argv or "-help" in sys.argv:
+          info()
 
-  askNewValues()
+      elif action == "1":
+          askNewValues()
+
+      else:
+        continue
 
 
 if __name__ == '__main__':
     main()
+
+
