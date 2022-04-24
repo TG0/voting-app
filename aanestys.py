@@ -158,12 +158,16 @@ def removeValueSet():
         ind = int(sel) - 1
 
         if input("\n Poistetaanko '%s' varmasti? K/E: " % _lst[ind]).lower() == "k":
-            _d.pop(_lst[ind], None)
+            if len(_d) == 1:
+                remove(FILE)
+            else:
+                _d.pop(_lst[ind], None)
+
+                with open(FILE, "w") as f:
+                    f.write(json.dumps(_d))
+
             print("\n -> poistettu\n")
             pressToContinue()
-
-        with open(FILE, "w") as f:
-            f.write(json.dumps(_d))
 
 
 
@@ -196,7 +200,6 @@ def delOldValues():
 
   if stat(FILE).st_size > 0:
       if input("\n Poistetaanko kaikki aiemmin talletetut lukujoukot? K/E: ").lower().startswith("k"):
-          sleep(1.2)
           if input("\n Oletko varma? K/E: ").lower() == "k":
               remove(FILE)
               print("\n -> Vanhat arvot poistettu.")
