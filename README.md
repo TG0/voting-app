@@ -6,6 +6,6 @@ The app speaks finnish only.
 
 See demo video:
 
-https://youtu.be/EejWKZrcKNY
+https://youtu.be/0oPvLAI2tWw
 
 
