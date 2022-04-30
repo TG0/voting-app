@@ -4,6 +4,8 @@ from time import sleep
 import json
 import sys
 import signal
+from numpy import arange
+import matplotlib.pyplot as plt  # run 1st: pip3 install matplotlib
 
 
 FILE = "data.json"
@@ -95,6 +97,22 @@ def oldValuesExist():
     return True
 
 
+def showBarPlot(names, values):
+    """
+    Generate and show bar plot.
+    Show 5 biggest averages only.
+    """
+    for ind in range(len(names)):
+        names[ind] += "\n" + str(values[ind])
+
+    yPos = arange(len(names[:5]))
+    plt.figure(figsize=(11, 6))
+    plt.bar(yPos, values[:5], color='royalblue', alpha=0.7)
+    plt.grid(color='#95a5a6', linestyle='--', linewidth=1, axis='y', alpha=0.6)
+    plt.xticks(yPos, names[:5])
+    plt.show()
+
+
 def showSaved():
     """
     Show all the saved value sets
@@ -122,12 +140,24 @@ def showSaved():
 
     _keys = sorted(_d2, reverse=True)
 
+    _names = []
+    _values = []
+
     for key in _keys:
+        averVal = round(avg(_d[_d2[key]]), 2)
         vals = str(_d[_d2[key]]).replace("[", "").replace("]", "")
-        print("\n {:20} k-a: {:4.2f}   ({})".format(_d2[key], round(avg(_d[_d2[key]]), 2), vals))
+        
+        print("\n {:20} k-a: {:4.2f}   ({})".format(_d2[key], averVal, vals))
+
+        _names.append(_d2[key])
+        _values.append(round(avg(_d[_d2[key]]), 2))
+
     print("\n\n")
 
-    pressToContinue()
+    if input(" Näytä pylväsdiagrammi? K/E: ").lower() == "k":
+        return showBarPlot(_names, _values)
+    else:
+      pressToContinue()
 
 
 
@@ -178,14 +208,15 @@ def info():
     print("""\n
  Ohjelma kerää lukuarvoja käyttäjältä yksi kerrallaan ja lopulta 
  tallettaa ne tiedostoon %s käyttäjän valitsemalla nimellä.
- Ohjelma näyttää annettujen arvojen keskiarvon.
+ Ohjelma näyttää annettujen arvojen keskiarvon ja piirtää näistä
+ halutessa pylväsdiagrammin, jossa 5 suurinta keskiarvoa.
 
  Ohjelmaa voi käyttää vaikka "levyraadissa" - käyttäjien kappaleelle 
  antamat arvot kysellään ohjelmaan ja lopulta ne talletetaan kappaleen
  nimellä talteen. Lopuksi kaikki talletetut äänet luetaan ohjelmalla
  tiedostosta ja katsotaan mikä sai parhaat pisteet.
  \n
- Ohjelman versio: 0.2  (24.04.2022)
+ Ohjelman versio: 0.3  (30.04.2022)
  \n""" % FILE)
 
     pressToContinue()
