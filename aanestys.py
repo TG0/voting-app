@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt  # run 1st: pip3 install matplotlib
 
 FILE = "data.json"
 
-sVals = ""
 vals = []
 
 
@@ -62,7 +61,7 @@ def storeValues():
             _d[name] = vals
 
     with open(FILE, "w") as f:
-        f.write(json.dumps(_d))
+        f.write(json.dumps(_d).replace(", \"", ",\n \""))
 
     print("\n\n")
 
@@ -297,5 +296,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
