@@ -130,34 +130,27 @@ def showSaved():
     with open(FILE, "r") as f:
         _d = json.load(f)
 
-    # _d  = {KEY:LIST-OF-VALUES, ...}
-    # _d2 = {AVG-VAL : KEY, ...}
-    # _keys = [5, 4.2, 3,3, 2, 1.1, 0.4]
-
     _d2 = {}
     for key in _d:
         _d2[avg(_d[key])] = key
 
     _keys = sorted(_d2, reverse=True)
 
+    # _d  = {KEY:LIST-OF-VALUES, ...}
+    # _d2 = {AVG-VAL : KEY, ...}
+    # _keys = [5, 4.2, 3,3, 2, 1.1, 0.4]
+
     _names = []
-    _values = []
 
     for key in _keys:
-        averVal = round(avg(_d[_d2[key]]), 2)
         vals = str(_d[_d2[key]]).replace("[", "").replace("]", "")
         
-        print("\n {:20} k-a: {:4.2f}   ({})".format(_d2[key], averVal, vals))
+        print("\n {:20} k-a: {:4.2f}   ({})".format(_d2[key], round(key, 2), vals))
 
         _names.append(_d2[key])
-        _values.append(round(avg(_d[_d2[key]]), 2))
 
-    print("\n\n")
-
-    if input(" Näytä pylväsdiagrammi? K/E: ").lower() == "k":
-        return showBarPlot(_names, _values)
-    else:
-      pressToContinue()
+    if input("\n\n Näytä pylväsdiagrammi? K/E: ").lower() == "k":
+        return showBarPlot(_names, [round(x, 2) for x in _keys])
 
 
 
@@ -216,7 +209,7 @@ def info():
  nimellä talteen. Lopuksi kaikki talletetut äänet luetaan ohjelmalla
  tiedostosta ja katsotaan mikä sai parhaat pisteet.
  \n
- Ohjelman versio: 0.3  (30.04.2022)
+ Ohjelman versio: 0.4  (01.05.2022)
  \n""" % FILE)
 
     pressToContinue()
@@ -273,7 +266,7 @@ def main():
 
       clearScreen()
 
-      print("\n Valitse toimenpide 1-4:\n")
+      print("\n Valitse 1-4:\n")
       print(" 1) Anna uusi lukujoukko")
       print(" 2) Näytä talletetut lukujoukot")
       print(" 3) Poista tallennettu lukujoukko")
@@ -283,8 +276,8 @@ def main():
       action = input("\n Valintasi: ")
 
       if action == "e":
-        print("\n HEIPPA!\n\n")
-        sys.exit(0)
+          print("\n HEIPPA!\n\n")
+          sys.exit(0)
 
       elif action == "2":
           showSaved()
